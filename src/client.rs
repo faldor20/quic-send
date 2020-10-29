@@ -1,63 +1,42 @@
-use std::{sync::Arc, fs, io, net::{IpAddr, Ipv4Addr, SocketAddr}};
+use std::{error::Error, fs, io, net::{IpAddr, Ipv4Addr, SocketAddr}, sync::Arc};
 
-use quinn::{ClientConfig, ClientConfigBuilder};
-use rustls::{ServerCertVerified, ServerCertVerifier};
+use quinn::{ClientConfig, ClientConfigBuilder, Endpoint};
+
+use rustls;
 use tracing::{error, info};
 use std;
-#[tokio::main]
-async fn client(server_addr:&SocketAddr,server_name:&str)-> Result<(), io::Error>{
-    let mut builder= quinn::Endpoint::builder();
-    let address=SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST),0);
-    let (endpoint,_)=builder.bind(&address).unwrap();
-    //copy certificate stuff here
-    endpoint.connect(server_addr, server_name);
-Ok(())
-}
-struct SkipServerVerification;
 
-impl SkipServerVerification {
-    fn new() -> Arc<Self> {
-        Arc::new(Self)
-    }
+
+use super::certificates;
+pub async fn run_client(server_addr: SocketAddr) -> Result<(), Box<dyn Error>> {
+    let client_cfg = configure_client();
+    let mut endpoint_builder = Endpoint::builder();
+    endpoint_builder.default_client_config(client_cfg);
+
+    let (endpoint, _) = endpoint_builder.bind(&"127.0.0.1:0".parse().unwrap())?;
+
+    // connect to server
+    let quinn::NewConnection { connection, .. } = endpoint
+        .connect(&server_addr, "localhost")
+        .unwrap()
+        .await
+        .unwrap();
+    println!("[client] connected: addr={}", connection.remote_address());
+    // Dropping handles allows the corresponding objects to automatically shut down
+    drop(connection);
+    // Make sure the server has a chance to clean up
+    endpoint.wait_idle().await;
+
+    Ok(())
 }
-impl ServerCertVerifier for SkipServerVerification {
-    fn verify_server_cert(
-        &self,
-        _roots: &rustls::RootCertStore,
-        _presented_certs: &[rustls::Certificate],
-        _dns_name: webpki::DNSNameRef,
-        _ocsp_response: &[u8],
-    ) -> Result<ServerCertVerified, rustls::TLSError> {
-        Ok(ServerCertVerified::assertion())
-    }
-}
+
+
+
 fn configure_client() -> ClientConfig {
     let mut cfg = ClientConfigBuilder::default().build();
-    let tls_cfg: &mut rustls::ClientConfig = std::sync::Arc::get_mut(&mut cfg.crypto).unwrap();
+    
+    let tls_cfg:&mut rustls::ClientConfig = Arc::get_mut(&mut cfg.crypto).unwrap().into();
     // this is only available when compiled with "dangerous_configuration" feature
-    tls_cfg
-        .dangerous()
-        .set_certificate_verifier(SkipServerVerification::new());
+    tls_cfg.dangerous().set_certificate_verifier(certificates::SkipServerVerification::new());
     cfg
-}
-
-fn getCert(ca:& Option<std::path::Path>,client_config:&mut quinn::ClientConfig)->Result<(),io::Error>{
-    if let Some(ca_path) = ca {
-        client_config
-            .add_certificate_authority(quinn::Certificate::from_der(&fs::read(&ca_path)?)?)?;
-    } else {
-        let dirs = ("./").unwrap();
-        match fs::read(dirs.join("cert.der")) {
-            Ok(cert) => {
-                client_config.add_certificate_authority(quinn::Certificate::from_der(&cert)?)?;
-            }
-            Err(ref e) if e.kind() == io::ErrorKind::NotFound => {
-                info!("local server certificate not found");
-            }
-            Err(e) => {
-                error!("failed to open local server certificate: {}", e);
-            }
-        }
-    }
-    Ok(())
 }
