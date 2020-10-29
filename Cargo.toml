@@ -1,0 +1,19 @@
+[package]
+name = "quic-send"
+version = "0.1.0"
+authors = ["eli dowling <eli.jambu@yahoo.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quinn ="0.6.1"
+tracing = "0.1.21"
+futures-io = "0.3.7"
+
+futures = "0.3.7"
+tokio-io = "0.1.13"
+rcgen ="0.8.5"
+rustls= { version = "0.18.1", features = ["dangerous_configuration","quic"] }
+webpki="0.21.3"
+tokio = { version = "0.3.2", features = ["full"] }
