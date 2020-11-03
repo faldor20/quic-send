@@ -2,13 +2,12 @@ use std::{error::Error, fs, io, net::{IpAddr, Ipv4Addr, SocketAddr}, sync::Arc};
 
 use quinn::{ClientConfig, ClientConfigBuilder, Endpoint};
 
-use rustls;
 use tracing::{error, info};
 use std;
 
 
 use super::certificates;
-pub async fn run_client(server_addr: SocketAddr) -> Result<(), Box<dyn Error>> {
+pub async fn run_client(server_addr: &String, file_path:&String) -> Result<(), Box<dyn Error>> {
     let client_cfg = configure_client();
     let mut endpoint_builder = Endpoint::builder();
     endpoint_builder.default_client_config(client_cfg);
@@ -17,7 +16,7 @@ pub async fn run_client(server_addr: SocketAddr) -> Result<(), Box<dyn Error>> {
 
     // connect to server
     let quinn::NewConnection { connection, .. } = endpoint
-        .connect(&server_addr, "localhost")
+        .connect(&server_addr.parse().expect("could't parse server addr"), "localhost")
         .unwrap()
         .await
         .unwrap();

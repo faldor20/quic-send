@@ -12,10 +12,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
         1=>{
             println!("use either -s 'filePath' to start a send server or -r 'ip' to request a file from a server ")
         },
-        3|4=>{
+        2|3|4=>{
             match  args[1].as_str() {
-            "-s"=> server::run_server(),
-            "-r"=>client::run_client(&args[2].parse().unwrap(),&args[3]),
+            "-s"=> server::run_server().await,
+            "-r"=>client::run_client(&args[2].parse().unwrap(),&args[3]).await.expect("failed client"),
             _=>println!("sorry i don't know what that is")
         }
         },
@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     
-    
+    Ok(())
     
   
 }

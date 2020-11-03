@@ -43,7 +43,7 @@ fn configure_server() -> Result<(ServerConfig, Vec<u8>), Box<dyn Error>> {
 
 /// Runs a QUIC server bound to localhost and port 5500
 pub async fn run_server() {
-    let addr= SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST),5500);
+    let addr:SocketAddr= "[::1]:4433".parse().expect("");
     let (mut incoming, _server_cert) = make_server_endpoint(addr).unwrap();
     // accept a single connection
     let incoming_conn = incoming.next().await.unwrap();
@@ -52,10 +52,10 @@ pub async fn run_server() {
         "[server] connection accepted: addr={}",
         new_conn.connection.remote_address()
     );
-    let buf;
-    let recv=(new_conn.next().await.unwrap().expect("couldn't find recv st"));
     
-    handle_request(recv);
+   // let recv=(new_conn.uni_streams.next() .await.unwrap().expect("couldn't find recv st"));
+    
+    //handle_request(recv);
 }
 async fn handle_connection( conn:quinn::Connecting ) -> Result<(),io::Error> {
     let quinn::NewConnection{connection, mut uni_streams,..}=conn.await?;
@@ -74,8 +74,9 @@ async fn handle_connection( conn:quinn::Connecting ) -> Result<(),io::Error> {
                 }
                 Ok(s) => s,
             };
+            
             tokio::spawn(
-                handle_request( & stream)
+                handle_request(  stream)
                     .unwrap_or_else(move |e| error!("failed: {reason}", reason = e.to_string()))
                     .instrument(info_span!("request")),
             );
@@ -85,10 +86,10 @@ async fn handle_connection( conn:quinn::Connecting ) -> Result<(),io::Error> {
     Ok(())
     
 }
-async fn handle_request( stream: & quinn::RecvStream) -> Result<(),io::Error> {
+async fn handle_request( stream:  quinn::RecvStream) -> Result<(),io::Error> {
     let mut file = fs::File::create("./out").expect("file not working");
-    stream.read_to_end()
-    common::write_stream_to_file( stream, &mut file);
+    //stream.read_to_end()
+    //common::write_stream_to_file( stream, &mut file);
     
     
     
