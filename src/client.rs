@@ -4,10 +4,12 @@ use quinn::{ClientConfig, ClientConfigBuilder, Endpoint};
 
 use tracing::{error, info};
 use std;
-
+use super::common;
 
 use super::certificates;
 pub async fn run_client(self_addr:&String,server_addr: &String, file_path:&String) -> Result<(), Box<dyn Error>> {
+    let mut file=fs::File::open(file_path).unwrap();
+    
     let client_cfg = configure_client();
     let mut endpoint_builder = Endpoint::builder();
     endpoint_builder.default_client_config(client_cfg);
@@ -21,11 +23,15 @@ pub async fn run_client(self_addr:&String,server_addr: &String, file_path:&Strin
         .await
         .unwrap();
     println!("[client] connected: addr={}", connection.remote_address());
+    let mut stream=connection.open_uni().await?;
+    
     // Dropping handles allows the corresponding objects to automatically shut down
     drop(connection);
     // Make sure the server has a chance to clean up
     endpoint.wait_idle().await;
 
+    common::write_file_to_stream(& mut stream, & mut file).await?;
+    
     Ok(())
 }
 

@@ -75,21 +75,21 @@ async fn handle_connection( conn:quinn::Connecting ) -> Result<(),io::Error> {
                 Ok(s) => s,
             };
             
-            tokio::spawn(
-                handle_request(  stream)
-                    .unwrap_or_else(move |e| error!("failed: {reason}", reason = e.to_string()))
-                    .instrument(info_span!("request")),
-            );
+            
+            handle_request(   &mut stream)
+            .unwrap_or_else(move |e| error!("failed: {reason}", reason = e.to_string()))
+            .instrument(info_span!("request")).await;
+            
         }
         Ok(())
-    };
+    }.await?;
     Ok(())
     
 }
-async fn handle_request( stream:  quinn::RecvStream) -> Result<(),io::Error> {
+async fn handle_request(  stream:& mut quinn::RecvStream) -> Result<(),io::Error> {
     let mut file = fs::File::create("./out").expect("file not working");
     //stream.read_to_end()
-    //common::write_stream_to_file( stream, &mut file);
+    common::write_stream_to_file(  stream, &mut file).await?;
     
     
     
