@@ -7,12 +7,12 @@ use std;
 
 
 use super::certificates;
-pub async fn run_client(server_addr: &String, file_path:&String) -> Result<(), Box<dyn Error>> {
+pub async fn run_client(self_addr:&String,server_addr: &String, file_path:&String) -> Result<(), Box<dyn Error>> {
     let client_cfg = configure_client();
     let mut endpoint_builder = Endpoint::builder();
     endpoint_builder.default_client_config(client_cfg);
 
-    let (endpoint, _) = endpoint_builder.bind(&"127.0.0.1:0".parse().unwrap())?;
+    let (endpoint, _) = endpoint_builder.bind(&self_addr.parse().unwrap())?;
 
     // connect to server
     let quinn::NewConnection { connection, .. } = endpoint

@@ -14,8 +14,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
         },
         2|3|4=>{
             match  args[1].as_str() {
-            "-s"=> server::run_server().await,
-            "-r"=>client::run_client(&args[2].parse().unwrap(),&args[3]).await.expect("failed client"),
+            "-s"=> server::run_server(&args[2]).await,
+            "-r"=>client::run_client(&args[2],&args[3].parse().unwrap(),&args[4]).await.expect("failed client"),
             _=>println!("sorry i don't know what that is")
         }
         },

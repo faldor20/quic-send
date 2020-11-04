@@ -42,8 +42,8 @@ fn configure_server() -> Result<(ServerConfig, Vec<u8>), Box<dyn Error>> {
 }
 
 /// Runs a QUIC server bound to localhost and port 5500
-pub async fn run_server() {
-    let addr:SocketAddr= "[::1]:4433".parse().expect("");
+pub async fn run_server( self_addr:&String) {
+    let addr:SocketAddr= self_addr.parse().expect("couldn't parse socketAddr, rember t add port x.x.x.x:xxxx");
     let (mut incoming, _server_cert) = make_server_endpoint(addr).unwrap();
     // accept a single connection
     let incoming_conn = incoming.next().await.unwrap();
