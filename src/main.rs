@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let args:Vec<String>=env::args().collect();
     match args.len() {
         1=>{
-            println!("use either -s 'filePath' to start a send server or -r 'ip' to request a file from a server ")
+            println!("use either -s 'host ip' to start a send server or -r 'host ip' 'server socket (ip and port x.x.x.x:xxx)' 'file' to send a file to the server ")
         },
         2|3|4=>{
             match  args[1].as_str() {
